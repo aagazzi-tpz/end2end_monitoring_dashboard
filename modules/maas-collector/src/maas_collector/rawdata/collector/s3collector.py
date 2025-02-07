@@ -370,32 +370,17 @@ class S3Collector(FileCollector, HttpMixin):
                             if fnmatch.fnmatch(
                                 file_name.lower(), extract_config.file_pattern.lower()
                             ):
-                                filepath = os.path.join(
-                                    self.args.working_directory, file_name
-                                )
-                                directory = os.path.dirname(filepath)
-                                # Créer les sous-dossiers nécessaires
-                                os.makedirs(directory, exist_ok=True)
                                 self.logger.debug(
-                                    "Find a match for %s %s (%s)",
+                                    "Find a match for %s %s",
                                     extract_config.interface_name,
                                     file_name,
-                                    filepath,
                                 )
 
-                                self.s3_resource.download_file(
-                                    bucket, file_name, filepath
+                                self.download_file_from_bucket(
+                                    bucket, extract_config, file_name
                                 )
 
-                                self.extract_from_file(
-                                    filepath,
-                                    extract_config,
-                                    report_name=os.path.basename(filepath),
-                                )
-
-                                self.on_ingest_success(filepath, extract_config)
                         # After ingestion keep this id in collector ?
-
                         #
                         last_item_from_buckets = obj["Key"]
                 else:
@@ -406,6 +391,23 @@ class S3Collector(FileCollector, HttpMixin):
 
         journal.document.last_date = __iter_end_date
         journal.document.save(refresh=True)
+
+    def download_file_from_bucket(self, bucket, extract_config, file_name):
+        filepath = os.path.join(self.args.working_directory, file_name)
+        directory = os.path.dirname(filepath)
+        # Create neccessary sub dir
+        os.makedirs(directory, exist_ok=True)
+
+        self.s3_resource.download_file(bucket, file_name, filepath)
+
+        self.extract_from_file(
+            filepath,
+            extract_config,
+            report_name=os.path.basename(filepath),
+            report_folder=bucket,
+        )
+
+        self.on_ingest_success(filepath, extract_config)
 
     # Template method: child class may override and use argument and self
     # pylint: disable=unused-argument,no-self-use
