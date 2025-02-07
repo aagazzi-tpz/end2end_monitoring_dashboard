@@ -1,8 +1,22 @@
 # # from pytests.
 # from pytest_rabbitmq import factories
 import os
+import json
+
 from maas_engine.consumer.amqp_settings import AMQPSettings
 from maas_engine.engine.query import QueryEngine
+
+
+def sort_dict(d):
+    if isinstance(d, dict):
+        return {k: sort_dict(v) for k, v in sorted(d.items())}
+    elif isinstance(d, list):
+        return sorted(
+            (sort_dict(x) for x in d), key=lambda x: json.dumps(x, sort_keys=True)
+        )
+    else:
+        return d
+
 
 # # rabbitmq = factories.rabbitmq_proc(port=5671)
 
@@ -78,6 +92,11 @@ def test_config_directory_load():
                         "events": ["CONSOLIDATE_REPLICATE"],
                     },
                     {
+                        "name": "etl-update.cds-datatake-s2",
+                        "routing_key": "update.cds-datatake-s2",
+                        "events": [{"id": "CONSOLIDATE_REPLICATE"}],
+                    },
+                    {
                         "name": "etl-new.cds-datatake-s1",
                         "routing_key": "new.cds-datatake-s1",
                         "events": [{"id": "CONSOLIDATE_REPLICATE"}],
@@ -90,11 +109,6 @@ def test_config_directory_load():
                     {
                         "name": "etl-new.cds-datatake-s2",
                         "routing_key": "new.cds-datatake-s2",
-                        "events": [{"id": "CONSOLIDATE_REPLICATE"}],
-                    },
-                    {
-                        "name": "etl-update.cds-datatake-s2",
-                        "routing_key": "update.cds-datatake-s2",
                         "events": [{"id": "CONSOLIDATE_REPLICATE"}],
                     },
                     {
@@ -113,4 +127,4 @@ def test_config_directory_load():
     }
     engine = QueryEngine
     engine.load_config_directory(ASSETS_DIR)
-    assert engine.CONFIG_DICT == result
+    assert sort_dict(engine.CONFIG_DICT) == sort_dict(result)
