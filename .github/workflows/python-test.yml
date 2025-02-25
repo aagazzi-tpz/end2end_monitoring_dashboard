@@ -94,10 +94,6 @@ jobs:
     runs-on: ubuntu-22.04
 
     needs: python-build
-
-    strategy:
-      matrix:
-        module: [maas-model, maas-engine, maas-collector, maas-cds]
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -105,9 +101,24 @@ jobs:
     - name: Download specific artifact
       uses: actions/download-artifact@v4
       with:
-        name: wheel-${{ matrix.module }}
-        path: ./modules/build/${{ matrix.module }}/
-
+        name: wheel-maas-model
+        path: ./modules/build/maas-model/
+    - name: Download specific artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: wheel-maas-engine
+        path: ./modules/build/maas-engine/ 
+    - name: Download specific artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: wheel-maas-cds
+        path: ./modules/build/maas-cds/ 
+    - name: Download specific artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: wheel-maas-collector
+        path: ./modules/build/maas-collector/
+        
     - name: Build Docker images
       run: |
         TAG_NAME=${{ github.ref_name }}
