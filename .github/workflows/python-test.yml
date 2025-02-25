@@ -105,7 +105,7 @@ jobs:
     - name: Download specific artifact
       uses: actions/download-artifact@v4
       with:
-        name: wheel-wheel-${{ matrix.module }}
+        name: wheel-${{ matrix.module }}
         path: ./modules/build/
 
     - name: Build Docker images
