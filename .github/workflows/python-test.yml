@@ -106,7 +106,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: wheel-${{ matrix.module }}
-        path: ./modules/build/
+        path: ./modules/build/${{ matrix.module }}/
 
     - name: Build Docker images
       run: |
