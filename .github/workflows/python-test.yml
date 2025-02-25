@@ -1,6 +1,15 @@
 name: Run Tests
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - '**'  # Triggers on push to any branch
+  pull_request:
+    branches:
+      - '**'  # Triggers on pull request to any branch
+  push:
+    tags:
+      - '*'  # Triggers on push to any tag
 
 jobs:
   test:
