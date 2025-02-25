@@ -2,7 +2,7 @@ name: Run Build Python
 
 on:
   workflow_run:
-    workflows: ["python-test"]
+    workflows: ["Run Tests"]
     types:
       - completed
 jobs:

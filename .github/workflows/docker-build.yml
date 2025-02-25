@@ -2,7 +2,7 @@ name: Run Docker build for python
 
 on:
   workflow_run:
-    workflows: ["python-test", "python-build"]
+    workflows: ["Run Tests", "Run Build Python"]
     types:
       - completed
 
