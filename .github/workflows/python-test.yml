@@ -12,7 +12,7 @@ on:
     
 
 jobs:
-  test:
+  python-test:
     runs-on: ubuntu-22.04
 
     strategy:
@@ -57,3 +57,59 @@ jobs:
       with:
         name: test-results-${{ matrix.module }}
         path: reports/${{ matrix.module }}-results.xml
+
+  python-build:
+    runs-on: ubuntu-22.04
+
+    needs: python-test
+    strategy:
+      matrix:
+        module: [maas-model, maas-engine, maas-collector, maas-cds]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2    
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11.11'
+        architecture: x64
+
+    - name: Install tox
+      run: pip install tox
+
+    - name: Build wheels
+      run: |
+        tox -c ./modules/${{ matrix.module }}/tox.ini -e build
+        
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: wheel-${{ matrix.module }}
+        path: ./modules/${{ matrix.module }}/dist/
+
+
+  docker-build:
+    runs-on: ubuntu-22.04
+
+    needs: python-build
+
+    strategy:
+      matrix:
+        module: [maas-model, maas-engine, maas-collector, maas-cds]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Download specific artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: wheel-wheel-${{ matrix.module }}
+        path: ./modules/build/
+
+    - name: Build Docker images
+      run: |
+        TAG_NAME=${{ github.ref_name }}
+        docker build --no-cache -t "maas-cds:${TAG_NAME}" -f ./modules/Dockerfile.maas-cds ./modules
+        docker build --no-cache -t "maas-collector:${TAG_NAME}" -f ./modules/Dockerfile.maas-collector ./modules
