@@ -1,5 +1,4 @@
 """contains all the model classes"""
-
 # import custom enumeration
 from maas_cds.model.enumeration import *
 
@@ -15,11 +14,6 @@ from maas_cds.model.dynamic_partition_mixin import *
 from maas_cds.model.datatake import *
 from maas_cds.model.datatake_s1 import *
 from maas_cds.model.datatake_s2 import *
-
-from maas_cds.model.cds_completeness import *
-from maas_cds.model.cds_completeness_s1 import *
-
-# from maas_cds.model.cds_completeness_s2 import *
 
 # following import completeness
 from maas_cds.model.cds_s3_completeness import *

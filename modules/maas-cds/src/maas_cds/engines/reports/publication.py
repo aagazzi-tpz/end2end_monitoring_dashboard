@@ -10,12 +10,11 @@ from maas_cds.engines.reports.anomaly_impact import (
 
 from maas_cds import model
 
-from maas_cds.engines.reports.mission_mixin import MissionMixinEngine
 from maas_cds.lib.dateutils import get_microseconds_delta
 
 
 class PublicationConsolidatorEngine(
-    MissionMixinEngine, AnomalyImpactMixinEngine, BaseProductConsolidatorEngine
+    AnomalyImpactMixinEngine, BaseProductConsolidatorEngine
 ):
     """Consolidate publications from raw products"""
 

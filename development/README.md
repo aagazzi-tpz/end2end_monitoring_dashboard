@@ -4,7 +4,7 @@
 
 ```bash
 # Adjust here if needed
-export WORK_DIR=~/work/end2end_monitoring_dashboard
+export WORK_DIR=~/work/aagazzi/end2end_monitoring_dashboard
 source $WORK_DIR/development/.env
 
 python${PYTHON_VERSION} -m venv ${WORK_DIR}/omcs-venv-${PYTHON_VERSION}-dev
@@ -62,6 +62,12 @@ pip freeze | grep maas-
 # -e git+ssh://REPO_REF#egg=maas_collector&subdirectory=modules/maas-collector
 # -e git+ssh://REPO_REF#egg=maas_engine&subdirectory=modulesmaas-engine
 # -e git+ssh://REPO_REF#egg=maas_model&subdirectory=modules/maas-model
+```
+
+## Running test
+
+```
+pip install pytest pytest-cov wheel
 ```
 
 ## Setup database mapping

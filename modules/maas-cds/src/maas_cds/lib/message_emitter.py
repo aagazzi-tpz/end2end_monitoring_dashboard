@@ -154,7 +154,6 @@ class MessageEmitter:
             )
 
             message.document_class = document_class
-            message.document_indices = report.document_indices
 
             self.publish_message(
                 message_content_dict=message.to_dict(),
