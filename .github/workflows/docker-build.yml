@@ -1,15 +1,16 @@
 name: Run Docker build for python
 
 on:
-  push:
-    tags:
-      - '*'
+  workflow_run:
+    workflows: ["python-test", "python-build"]
+    types:
+      - completed
 
 jobs:
   docker-build:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && startsWith(github.event.workflow_run.head_branch, 'refs/tags/') }}
+    
     runs-on: ubuntu-22.04
-
-    needs: build-wheel
 
     strategy:
       matrix:

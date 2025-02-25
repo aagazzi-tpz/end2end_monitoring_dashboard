@@ -1,14 +1,13 @@
 name: Run Build Python
 
 on:
-  push:
-    tags:
-      - '*'
-
+  workflow_run:
+    workflows: ["python-test"]
+    types:
+      - completed
 jobs:
   python-build:
     runs-on: ubuntu-22.04
-    needs: test
     strategy:
       matrix:
         module: [maas-model, maas-engine, maas-collector, maas-cds]
