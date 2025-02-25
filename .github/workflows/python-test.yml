@@ -132,7 +132,7 @@ jobs:
     - name: Build Docker images
       run: |
         docker build --no-cache -t "ghcr.io/${{ github.repository }}/maas-cds:${{ github.ref_name }}" -f ./modules/Dockerfile.maas-cds ./modules
-        docker build --no-cache -t "ghcr.io/${{ github.repository }}/maas-collector:${TAG_NAME}" -f ./modules/Dockerfile.maas-collector ./modules
+        docker build --no-cache -t "ghcr.io/${{ github.repository }}/maas-collector:${{ github.ref_name }}" -f ./modules/Dockerfile.maas-collector ./modules
 
     - name: Push Docker image
       run: |
