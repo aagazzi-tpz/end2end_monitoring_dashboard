@@ -36,7 +36,7 @@ services:
         hard: 65536
     volumes:
       # - opensearch-data:/usr/share/opensearch/data
-      - opensearch-data-next:/usr/share/opensearch/data
+      - opensearch-data:/usr/share/opensearch/data
       # - opensearch-config:/usr/share/opensearch/config
       # - ./opensearch/opensearch.yml:/usr/share/opensearch/config/opensearch.yml
     ports:
@@ -83,6 +83,5 @@ volumes:
   rabbitmq-data:
   rabbitmq-logs:
   opensearch-data:
-  opensearch-data-next:
   # opensearch-logs:
   minio_data:
