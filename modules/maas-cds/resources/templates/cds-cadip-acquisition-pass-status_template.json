@@ -42,6 +42,9 @@
             "station_unit_id": {
                 "type": "keyword"
             },
+            "station_id": {
+                "type": "keyword"
+            },
             "acquisition_id": {
                 "type": "keyword"
             },

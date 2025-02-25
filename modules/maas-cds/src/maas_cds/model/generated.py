@@ -1089,6 +1089,8 @@ class CdsCadipAcquisitionPassStatus(MAASDocument):
 
     session_id = Keyword()
 
+    station_id = Keyword()
+
     station_unit_id = Keyword()
 
     updateTime = ZuluDate()

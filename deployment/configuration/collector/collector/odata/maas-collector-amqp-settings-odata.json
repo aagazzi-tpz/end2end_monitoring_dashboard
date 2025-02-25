@@ -3,6 +3,9 @@
         "new.raw.data.prip-product": {
             "chunk_size": 512
         },
+        "new.raw.data.prip-product-switch": {
+            "chunk_size": 512
+        },
         "new.raw.data.new-prip-product": {
             "chunk_size": 512
         },
