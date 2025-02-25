@@ -44,6 +44,7 @@
                         "station_id": {
                             "python": "lambda c: c['StationId'] if 'StationId' in c and c['StationId'] is not None else 'MPS_'"
                         },
+
                         "ground_station": {
                             "python": "lambda c: 'MPS'"
                         },

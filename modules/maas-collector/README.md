@@ -14,6 +14,7 @@ python3 -m maas_collector.rawdata.cli.filesystem -h
 
 > See [Common options](common_options)
 
+
 ## Generic collectors
 
 | Collector                                  | Entry point                             | Description                                                                                            |
@@ -36,6 +37,7 @@ python3 -m maas_collector.rawdata.cli.filesystem -h
 | `maas_collector.rawdata.cli.weather` | Custom collector sample / demo that ingest weather open data |
 
 ## Generic extractors
+
 
 maas-collector can extract data from different formats using text configuration.
 

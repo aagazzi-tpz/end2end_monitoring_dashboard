@@ -32,6 +32,8 @@ from maas_collector.rawdata.collector.http.abstract_query_strategy import (
     AbstractHttpQueryStrategy,
 )
 
+import maas_collector.rawdata.collector.tools.archivetools as archivetools
+
 
 # Désactive la génération automatique de __repr__ pour pouvoir utiliser
 # celui du parent qui masque les données sensible comme les mot de passe
@@ -56,6 +58,29 @@ class S3CollectorConfiguration(FileCollectorConfiguration):
     s3_region: str = None
 
     refresh_interval: int = 0
+
+    parent_file_pattern: str = None
+
+    def custom_filename_match(self, name: str) -> bool:
+        """Check if a filename matches the configuration
+
+        parent_file_pattern is used to link a sub config to its main
+        config without altering the file_pattern attribute.
+
+        It allows to test independant parts of the collect pipeline
+        (list files, d/l & untar, extract) without having to replay the whole pipeline
+
+        Args:
+            name ([str]): name of a file
+
+        Returns:
+            bool: True if the file is ok to be processed by the configuration extractor
+        """
+        if self.parent_file_pattern:
+            return fnmatch.fnmatch(name, self.parent_file_pattern)
+        elif self.file_pattern:
+            return fnmatch.fnmatch(name, self.file_pattern)
+        return False
 
 
 @dataclass
@@ -89,6 +114,7 @@ class S3Collector(FileCollector, HttpMixin):
         super().__init__(args)
         self.config: S3Configuration = config
         self.s3_config_dict = {}
+        self.archive_extractor = archivetools.ArchiveExtractor(self.logger)
 
     def build_query_implementation(
         self, config, session, start_date, end_date, journal
@@ -346,7 +372,6 @@ class S3Collector(FileCollector, HttpMixin):
                         self.logger.debug(
                             "File Name: %s, Last Modified: %s", file_name, last_modified
                         )
-
                         if not (__iter_start_date < last_modified <= __iter_end_date):
                             self.logger.debug(
                                 "This file has been already process or will be in the futur %s %s",
@@ -367,20 +392,66 @@ class S3Collector(FileCollector, HttpMixin):
                             if self.should_stop_loop:
                                 break
                             # OPTI : Can download 1 time if two config match
-                            if fnmatch.fnmatch(
-                                file_name.lower(), extract_config.file_pattern.lower()
-                            ):
+                            if extract_config.custom_filename_match(file_name):
+                                filepath = os.path.join(
+                                    self.args.working_directory, file_name
+                                )
+                                directory = os.path.dirname(filepath)
+                                # Créer les sous-dossiers nécessaires
+                                os.makedirs(directory, exist_ok=True)
                                 self.logger.debug(
-                                    "Find a match for %s %s",
+                                    "Find a match for %s %s (%s)",
                                     extract_config.interface_name,
                                     file_name,
+                                    filepath,
                                 )
 
-                                self.download_file_from_bucket(
-                                    bucket, extract_config, file_name
+                                self.s3_resource.download_file(
+                                    bucket, file_name, filepath
                                 )
 
+                                if file_name.lower().endswith(
+                                    (".tgz", ".tar.gz", ".tar", ".gz", ".zip")
+                                ):
+
+                                    backup = self._backup
+                                    self._backup = None
+                                    extracted_files = self.archive_extractor.extract(
+                                        archive_path=filepath,
+                                        extract_path=self.args.working_directory,
+                                        pattern_file=extract_config.file_pattern,
+                                    )
+                                    self.logger.debug(
+                                        "Downloaded archive %s, extracted files: %s",
+                                        filepath,
+                                        extracted_files,
+                                    )
+                                    for extracted_file in extracted_files:
+                                        self.logger.debug(
+                                            "Running extractor on: %s",
+                                            extracted_file,
+                                        )
+                                        self.extract_from_file(
+                                            extracted_file,
+                                            extract_config,
+                                            report_name=os.path.basename(filepath),
+                                        )
+                                    os.remove(filepath)
+                                    self._backup = backup
+                                else:
+                                    self.logger.debug(
+                                        "Running extractor on: %s",
+                                        filepath,
+                                    )
+                                    self.extract_from_file(
+                                        filepath,
+                                        extract_config,
+                                        report_name=os.path.basename(filepath),
+                                    )
+
+                                self.on_ingest_success(filepath, extract_config)
                         # After ingestion keep this id in collector ?
+
                         #
                         last_item_from_buckets = obj["Key"]
                 else:
@@ -391,23 +462,6 @@ class S3Collector(FileCollector, HttpMixin):
 
         journal.document.last_date = __iter_end_date
         journal.document.save(refresh=True)
-
-    def download_file_from_bucket(self, bucket, extract_config, file_name):
-        filepath = os.path.join(self.args.working_directory, file_name)
-        directory = os.path.dirname(filepath)
-        # Create neccessary sub dir
-        os.makedirs(directory, exist_ok=True)
-
-        self.s3_resource.download_file(bucket, file_name, filepath)
-
-        self.extract_from_file(
-            filepath,
-            extract_config,
-            report_name=os.path.basename(filepath),
-            report_folder=bucket,
-        )
-
-        self.on_ingest_success(filepath, extract_config)
 
     # Template method: child class may override and use argument and self
     # pylint: disable=unused-argument,no-self-use

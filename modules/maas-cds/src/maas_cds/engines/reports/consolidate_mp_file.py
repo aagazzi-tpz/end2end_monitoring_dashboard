@@ -4,7 +4,9 @@ import typing
 import hashlib
 import copy
 from datetime import datetime, timedelta, timezone
+from maas_cds.model.datatake import CdsDatatake
 from opensearchpy import Q
+from itertools import groupby
 
 from maas_engine.engine.rawdata import DataEngine
 from maas_engine.engine.base import EngineReport
@@ -22,6 +24,7 @@ from maas_cds.engines.reports.anomaly_impact import (
 )
 
 from maas_cds.model.generated import (
+    MaasConfigCompleteness,
     MpProduct,
     MpAllProduct,
     MpHktmDownlink,
@@ -29,6 +32,7 @@ from maas_cds.model.generated import (
 )
 from maas_cds.model import (
     CdsCamsTickets,
+    CdsCompleteness,
     CdsProduct,
     CdsCadipAcquisitionPassStatus,
     CdsEdrsAcquisitionPassStatus,
@@ -53,6 +57,7 @@ class ConsolidateMpFileEngine(MissionMixinEngine, AnomalyImpactMixinEngine, Data
         chunk_size=1,
         send_reports=True,
         tolerance_value: int = 30,
+        merge_reports: bool = True,
     ):
         super().__init__(args, chunk_size=chunk_size, send_reports=send_reports)
         self.raw_data_type = raw_data_type
@@ -62,6 +67,7 @@ class ConsolidateMpFileEngine(MissionMixinEngine, AnomalyImpactMixinEngine, Data
         self.data_time_start_field_name = data_time_start_field_name
         self.future_ids = set()
         self.tolerance_value = tolerance_value
+        self.merge_reports = merge_reports
 
     def action_iterator(self) -> typing.Generator:
         """override
@@ -145,11 +151,14 @@ class ConsolidateMpFileEngine(MissionMixinEngine, AnomalyImpactMixinEngine, Data
         Yields:
             CdsHktmAcquisitionCompleteness | CdsHktmProductionCompleteness | CdsDownlinkDatatake | CdsDatatake : Consolidated document
         """
-        consolidated_doc = self.consolidate_data_from_raw_data(to_consolidate_mp)
-        if consolidated_doc is not None:
-            if self.consolidated_data_type != "CdsDownlinkDatatake":
-                self.report(consolidated_doc)
-            yield consolidated_doc.to_bulk_action()
+        consolidated_docs = self.consolidate_data_from_raw_data(to_consolidate_mp)
+
+        for consolidated_doc in consolidated_docs:
+
+            if consolidated_doc is not None:
+                if self.consolidated_data_type != "CdsDownlinkDatatake":
+                    self.report(consolidated_doc)
+                yield consolidated_doc.to_bulk_action()
 
     def should_split_mp(self, to_consolidate_mp: MpAllProduct):
         """Condition to identify double mp all products
@@ -314,7 +323,10 @@ class ConsolidateMpFileEngine(MissionMixinEngine, AnomalyImpactMixinEngine, Data
             )
         self.logger.debug("[%s] to consolidate query : %s", report_name, search)
         search = search.params(ignore=404)
+
+        # Dangerous usage of scan
         mp_consolidate_list = list(search.scan())
+
         self.logger.debug(
             "[%s] to consolidate query result list: %s",
             report_name,
@@ -384,20 +396,20 @@ class ConsolidateMpFileEngine(MissionMixinEngine, AnomalyImpactMixinEngine, Data
         Returns:
             consolidated_data: the consolidated data
         """
-        consolidated_data = None
+
         # use specific consolidation method depending on type
         if self.consolidated_data_type == "CdsDatatake":
-            consolidated_data = self.consolidtate_cdsdatatake_from_mpproduct(raw_data)
+            yield self.consolidtate_cdsdatatake_from_mpproduct(raw_data)
+        if self.consolidated_data_type == "CdsCompleteness":
+            yield from self.consolidtate_cdscompleteness_from_mpproduct(raw_data)
         elif self.consolidated_data_type == "CdsDownlinkDatatake":
-            consolidated_data = self.consolidate_cdsdownlinkdatatake_from_mpallproduct(
-                raw_data
-            )
+            yield self.consolidate_cdsdownlinkdatatake_from_mpallproduct(raw_data)
         elif self.consolidated_data_type == "CdsHktmAcquisitionCompleteness":
-            consolidated_data = self.consolidate_cdshktmacquisitioncompleteness_from_mphktmacquisitionproduct(
+            yield self.consolidate_cdshktmacquisitioncompleteness_from_mphktmacquisitionproduct(
                 raw_data
             )
         elif self.consolidated_data_type == "CdsHktmProductionCompleteness":
-            consolidated_data = (
+            yield (
                 self.consolidate_cdshktmproductioncompleteness_from_mphktmdownlink(
                     raw_data
                 )
@@ -406,7 +418,6 @@ class ConsolidateMpFileEngine(MissionMixinEngine, AnomalyImpactMixinEngine, Data
             self.logger.warning(
                 "Unknow type for consolidation : %s", self.consolidated_data_type
             )
-        return consolidated_data
 
     @anomaly_link
     def consolidtate_cdsdatatake_from_mpproduct(
@@ -420,7 +431,6 @@ class ConsolidateMpFileEngine(MissionMixinEngine, AnomalyImpactMixinEngine, Data
         Returns:
             consolidated_data: the consolidated CDSDatatake
         """
-
         # NOT_RECORDING are test file
         if mp_product.timeliness == "NOT_RECORDING":
             return None
@@ -495,6 +505,29 @@ class ConsolidateMpFileEngine(MissionMixinEngine, AnomalyImpactMixinEngine, Data
         cds_datatake.application_date = raw_document_application_date
 
         return cds_datatake
+
+    def consolidtate_cdscompleteness_from_mpproduct(
+        self, mp_product: MpProduct
+    ) -> MAASDocument:
+        """generate a CdsCompleteness from a MPProduct
+
+        Args:
+            mp_product (raw_data): the MPProduct to consolidate
+
+        Returns:
+            consolidated_data: the consolidated CdsCompleteness
+        """
+
+        # NOT_RECORDING are test file
+        if mp_product.timeliness == "NOT_RECORDING":
+            return None
+
+        for prip_name in self.prip_service_for_mp(mp_product):
+
+            cds_completeness = self.consolidtate_cdsdatatake_from_mpproduct(mp_product)
+            cds_completeness.prip_name = prip_name
+
+            yield cds_completeness
 
     def consolidate_cdsdownlinkdatatake_from_mpallproduct(
         self, mp_all_product: MpAllProduct
@@ -977,3 +1010,42 @@ class ConsolidateMpFileEngine(MissionMixinEngine, AnomalyImpactMixinEngine, Data
                     self._cams_tickets_dict[datatake_id].append(ticket)
                 else:
                     self._cams_tickets_dict[datatake_id] = [ticket]
+
+    def prip_service_for_mp(self, mp_product: MpProduct):
+        if self.COMPLETENESS_CONFIG is None:
+            self.COMPLETENESS_CONFIG = self.load_completeness_configuration()
+
+        if mp_product.satellite_id not in self.COMPLETENESS_CONFIG:
+            self.logger.warning(
+                "Missingt configuration completeness for %s", mp_product.satellite_id
+            )
+            return []
+
+        else:
+            return self.COMPLETENESS_CONFIG[mp_product.satellite_id]
+
+    @staticmethod
+    def load_completeness_configuration():
+        """load the completeness configuration
+
+        Returns:
+            dict: contain level mapping for product_type
+            ex: "MSI_L2A_TC": "L2_",
+                "PRD_HKTM__": "L0_",
+                "AUX_SADATA": "AUX",
+                ...
+        """
+        # OPTI: Switch later to the date
+        search_request = MaasConfigCompleteness.search().filter("term", activated=True)
+        request_result: list[MaasConfigCompleteness] = search_request.params(
+            size=1000
+        ).execute()
+
+        configuration = {}
+
+        for conf in request_result:
+            if conf.satellite_unit not in configuration:
+                configuration[conf.satellite_unit] = []
+            configuration[conf.satellite_unit].append(conf.prip_name)
+
+        return configuration

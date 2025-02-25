@@ -77,7 +77,9 @@ class EDRSApsExtractor(BaseExtractor):
                 f"{date_cell.value} ({date_cell.ctypes}) failed"
             )
 
+
         self.logger.info("Extracted base date is %s", self._base_date)
+
 
         # the index of the row where effective data starts
         start_index = None

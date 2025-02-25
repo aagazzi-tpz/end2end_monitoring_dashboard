@@ -47,6 +47,8 @@ class CdsDatatakeS1(CdsDatatake):
     L2_OCN__PRODUCT_TYPE = ["OCN__2A", "OCN__2S"]
     LA__PRODUCT_TYPE = ["ETA__AX"]
 
+    REFERENCE_PRODUCT_TIME_FIELD = "prip_publication_date"
+
     def product_type_with_missing_periods(self, product_type: str) -> bool:
         """Do we want missing periods for this product type ?"""
         return not product_type.startswith("RF") and product_type.endswith("RAW__0S")
