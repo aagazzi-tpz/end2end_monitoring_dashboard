@@ -77,7 +77,7 @@ class EDRSApsExtractor(BaseExtractor):
                 f"{date_cell.value} ({date_cell.ctypes}) failed"
             )
 
-        self.logger.debug("Extracted base date is %s", self._base_date)
+        self.logger.info("Extracted base date is %s", self._base_date)
 
         # the index of the row where effective data starts
         start_index = None
@@ -85,6 +85,9 @@ class EDRSApsExtractor(BaseExtractor):
         # as common cells are merged, reference to the previous row is need for second
         # line ingestion
         previous_row = None
+
+        # Reset doy
+        self._doy = None
 
         for index, row in enumerate(sheet.get_rows()):
             if self.should_stop:
