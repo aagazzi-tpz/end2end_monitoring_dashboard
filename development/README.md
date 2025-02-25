@@ -251,6 +251,19 @@ docker build --no-cache -t "maas-cds:2.8.1-beta" -f ./modules/Dockerfile.maas-cd
 docker build --no-cache -t "maas-collector:3.8.2-beta" -f ./modules/Dockerfile.maas-collector ./modules
 ```
 
+## Setup run locally with docker image
+
+Adjust we to add/remove with your desired stuff
+
+```bash
+docker compose -f ${WORK_DIR}/development/docker-compose.yaml \
+-f ${WORK_DIR}/development/docker-compose.maas.engine-all.yaml \
+-f ${WORK_DIR}/development/docker-compose.maas.collector-odata.yaml \
+-f ${WORK_DIR}/development/docker-compose.maas.collector-monitor.yaml \
+--env-file ${WORK_DIR}/development/.env up -d 
+```
+
+
 ## S3 bucket snapshot
 
 ```bash
@@ -265,6 +278,27 @@ export S3_ACCESS_KEY=""
 docker exec -it dev-omcs-opensearch /bin/bash -c "opensearch-keystore list ; opensearch-keystore remove s3.client.default.access_key ;opensearch-keystore remove s3.client.default.secret_key; echo ${S3_ACCESS_KEY} | opensearch-keystore add --stdin --force s3.client.default.access_key && echo ${S3_SECRET_KEY} | opensearch-keystore add --stdin --force s3.client.default.secret_key; opensearch-keystore list"
 ```
 
+### Create S3 repository
+
+```json
+// POST /_snapshot/manual-snapshot
+{
+  "type": "s3",
+  "settings": {
+    "bucket": "manual-snapshot",
+  "path_style_access": "false",
+    "endpoint": "s3.waw3-1.cloudferro.com",
+    "protocol": "https",
+    "maxRestoreBytesPerSec": "40mb",
+    "chunkSize": "5tb",
+    "readonly": "false",
+    "compress": "true",
+    "maxSnapshotBytesPerSec": "40mb",
+    "base_path": "os-snapshots",
+    "region": "waw3-1"
+  }
+}
+```
 
 ## Performing some reprocessing
 

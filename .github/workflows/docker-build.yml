@@ -1,0 +1,32 @@
+name: Run Docker build for python
+
+on:
+  workflow_run:
+    workflows: ["Run Tests", "Run Build Python"]
+    types:
+      - completed
+
+jobs:
+  docker-build:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && startsWith(github.event.workflow_run.head_branch, 'refs/tags/') }}
+    
+    runs-on: ubuntu-22.04
+
+    strategy:
+      matrix:
+        module: [maas-model, maas-engine, maas-collector, maas-cds]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Download specific artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: wheel-wheel-${{ matrix.module }}
+        path: ./modules/build/
+
+    - name: Build Docker images
+      run: |
+        TAG_NAME=${{ github.ref_name }}
+        docker build --no-cache -t "maas-cds:${TAG_NAME}" -f ./modules/Dockerfile.maas-cds ./modules
+        docker build --no-cache -t "maas-collector:${TAG_NAME}" -f ./modules/Dockerfile.maas-collector ./modules

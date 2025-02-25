@@ -232,7 +232,7 @@ class CdsDatatakeS1(CdsDatatake):
 
             config = self.MINIMUM_PERCENTAGE_OVERLAPPING_AREA.get(type_of_area)
             (_, target_threshold) = get_good_threshold_config_from_value(
-                config, str(getattr(product, self.REFERENCE_PRODUCT_TIME_FIELD))
+                config, str(product.prip_publication_date)
             )
             if getattr(product, target_attr_coverage, 0) > target_threshold:
                 raw_l0_sensing_period.append(

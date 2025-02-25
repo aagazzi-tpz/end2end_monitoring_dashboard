@@ -56,3 +56,5 @@ venv/
 # test folder
 tests/gen
 tests/data/S2B_20211113035518024483_1short_DS
+
+!tests/data/*

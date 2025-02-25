@@ -69,6 +69,30 @@ def auxip_product_1():
 
 
 @pytest.fixture
+def auxip_product_2():
+    data_dict = {
+        "reportName": " https://adgs.copernicus.eu",
+        "product_id": "53f8d1c8-bc20-11ef-a319-fa163e75e309",
+        "product_name": "S1A_OPER_REP__MACP__20140405T051444_20241213T081213_0007.TGZ",
+        "content_length": 52780,
+        "publication_date": "2024-12-17T02:40:50.554Z",
+        "start_date": "2014-04-05T05:14:44.000Z",
+        "end_date": "2024-12-13T08:12:13.000Z",
+        "origin_date": "2024-12-17T02:38:00.000Z",
+        "eviction_date": "2027-09-13T02:40:50.996Z",
+        "interface_name": "AUXIP_Exprivia",
+        "production_service_type": "AUXIP",
+        "production_service_name": "Exprivia",
+        "ingestionTime": "2024-12-17T03:01:04.116Z",
+    }
+
+    raw_document = model.AuxipProduct(**data_dict)
+    raw_document.meta.id = "9fe187c74e636a2d0fc385fe0c6104c3"
+    raw_document.full_clean()
+    return raw_document
+
+
+@pytest.fixture
 def sat_unavailability_product_1():
     data_dict = {
         "product_id": "dc03b87e-9461-11ec-9d4b-fa163e7968e5",
@@ -350,4 +374,37 @@ def test_auxip_product_consolidation_2():
         "publication_date": "2023-07-26T11:43:51.723Z",
         "transfer_timeliness": 104723000.0,
         "from_sensing_timeliness": 1756568277000.0,
+    }
+
+
+def test_auxip_publication_consolidation(auxip_product_2):
+    engine = PublicationConsolidatorEngine()
+    engine.input_documents = [auxip_product_2]
+    engine.on_pre_consolidate()
+
+    publication = engine.consolidate_from_AuxipProduct(
+        auxip_product_2, model.CdsPublication()
+    )
+
+    assert publication.to_dict() == {
+        "datatake_id": "______",
+        "mission": "S1",
+        "service_id": "Exprivia",
+        "service_type": "AUXIP",
+        "timeliness": "_",
+        "key": "9fe187c74e636a2d0fc385fe0c6104c3",
+        "publication_date": "2024-12-17T02:40:50.554Z",
+        "from_sensing_timeliness": 325717554000.0,
+        "content_length": 52780,
+        "product_type": "REP__MACP_",
+        "sensing_end_date": "2024-12-13T08:12:13.000Z",
+        "origin_date": "2024-12-17T02:38:00.000Z",
+        "sensing_duration": 337402649000000.0,
+        "product_level": "___",
+        "product_uuid": "53f8d1c8-bc20-11ef-a319-fa163e75e309",
+        "satellite_unit": "S1A",
+        "name": "S1A_OPER_REP__MACP__20140405T051444_20241213T081213_0007.TGZ",
+        "transfer_timeliness": 170554000.0,
+        "sensing_start_date": "2014-04-05T05:14:44.000Z",
+        "eviction_date": "2027-09-13T02:40:50.996Z",
     }

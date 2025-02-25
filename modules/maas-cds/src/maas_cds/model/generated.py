@@ -4,7 +4,9 @@ DA0 classes generated from index templates.
 
 **DO NOT EDIT, ONLY INHERIT !**
 
+
 Generated date: 2025-01-17T08:13:23.698885
+
 
 Generated from:
     - /maas-cds/resources/templates/cds-acquisition-pass-status_template.json
@@ -1095,6 +1097,8 @@ class CdsCadipAcquisitionPassStatus(MAASDocument):
     satellite_id = Keyword()
 
     session_id = Keyword()
+
+    station_id = Keyword()
 
     station_unit_id = Keyword()
 

@@ -41,6 +41,9 @@
                         "downlink_stop": "`this`.DownlinkStop",
                         "downlink_status": "`this`.DownlinkStatusOK",
                         "delivery_push_status": "`this`.DeliveryPushOK",
+                        "station_id": {
+                            "python": "lambda c: c['StationId'] if 'StationId' in c and c['StationId'] is not None else 'INS_'"
+                        },
                         "ground_station": {
                             "python": "lambda c: 'INS'"
                         },

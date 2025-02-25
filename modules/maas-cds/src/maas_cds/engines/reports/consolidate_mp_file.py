@@ -48,8 +48,6 @@ class ConsolidateMpFileEngine(MissionMixinEngine, AnomalyImpactMixinEngine, Data
 
     TOLERANCE_IN_MINUTES = 30
 
-    COMPLETENESS_CONFIG = None
-
     def __init__(
         self,
         args=None,
@@ -178,29 +176,6 @@ class ConsolidateMpFileEngine(MissionMixinEngine, AnomalyImpactMixinEngine, Data
             and isinstance(session_id, list)
             and len(to_consolidate_mp.session_id) > 1
         )
-
-    def _generate_report_from_action_per_documents(self, classname, action, documents):
-        """Override strategy to send report per indices"""
-
-        # Group by require sorted data
-        documents.sort(key=lambda doc: doc.partition_index_name)
-
-        grouped_documents = {
-            key: list(group)
-            for key, group in groupby(
-                documents, key=lambda doc: doc.partition_index_name
-            )
-        }
-
-        for index, docs in grouped_documents.items():
-            self.logger.debug("Using custom report strategy: %s - %s", index, classname)
-            yield EngineReport(
-                action,
-                [document.meta.id for document in docs],
-                document_class=classname,
-                chunk_size=self.chunk_size,
-                document_indices=[index],
-            )
 
     def split_mp_all(self, mp_all: MpAllProduct):
         """Some mp_all documents are a merger of 2 stations and 2 session_id

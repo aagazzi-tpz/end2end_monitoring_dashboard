@@ -370,6 +370,7 @@ def test_s1_aux_mp_classic_size_10():
     }
 
 
+
 def test_s1_aux_mp_specific_size_8():
 
     product_name = "S1C_MP_ALL__MTL_20241021T171016_20241102T193714.tgz"
@@ -382,7 +383,6 @@ def test_s1_aux_mp_specific_size_8():
         "product_level": "L__",
     }
 
-
 def test_s1_aux_mp_specific_size_12():
     product_name = "S1A_OPER_MPL_TIMELINE_20241119T171645_20241201T193544.tgz"
     result_dict = extract_data_from_product_name_s1(product_name)
@@ -391,5 +391,16 @@ def test_s1_aux_mp_specific_size_12():
         "satellite_unit": "S1A",
         "mission": "S1",
         "product_type": "MPL_TIMELINE",
+        "product_level": "L__",
+    }
+
+def test_s1_oper_macp():
+    product_name = "S1A_OPER_REP__MACP__20140405T051444_20241228T012636_0005.TGZ"
+    result_dict = extract_data_from_product_name_s1(product_name)
+
+    assert result_dict == {
+        "satellite_unit": "S1A",
+        "mission": "S1",
+        "product_type": "REP__MACP_",
         "product_level": "L__",
     }
