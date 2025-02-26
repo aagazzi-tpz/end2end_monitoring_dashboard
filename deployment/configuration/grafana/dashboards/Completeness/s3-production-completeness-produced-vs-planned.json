@@ -1105,6 +1105,18 @@
               "reducer": "sum"
             }
           }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "desc": false,
+                "field": "product_type"
+              }
+            ]
+          }
         }
       ],
       "type": "marcusolsson-gantt-panel"
