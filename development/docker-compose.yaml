@@ -54,6 +54,11 @@ services:
       GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
       GF_AUTH_DISABLE_SIGNOUT_MENU: "true"
       GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      # GF_DATABASE_TYPE: ${GF_DATABASE_TYPE}
+      # GF_DATABASE_HOST: ${GF_DATABASE_HOST}
+      # GF_DATABASE_NAME: ${GF_DATABASE_NAME}
+      # GF_DATABASE_USER: ${GF_DATABASE_USER}
+      # GF_DATABASE_PASSWORD: ${GF_DATABASE_PASSWORD}
       GF_INSTALL_PLUGINS: "marcusolsson-gantt-panel,https://github.com/yesoreyeram/grafana-infinity-datasource/releases/download/v2.4.0/yesoreyeram-infinity-datasource-2.4.0.zip;yesoreyeram-infinity-datasource"
       ES_URL: ${ES_INTERNAL_URL}
       ES_USERNAME: ${ES_USERNAME}

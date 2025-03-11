@@ -1,9 +1,11 @@
-""" Custom CDS model definition """
+"""Custom CDS model definition"""
 
 import logging
 from typing import List
 from functools import cached_property
 
+from maas_cds.lib.config import get_good_threshold_config_from_value
+from maas_model.date_utils import datetime_to_zulu
 from opensearchpy import Keyword, Q
 from maas_cds.lib import tolerance
 from maas_cds.lib.dateutils import get_microseconds_delta
@@ -53,18 +55,66 @@ class CdsDatatake(AnomalyMixin, generated.CdsDatatake):
     product_group_ids = Keyword(multi=True)
 
     def get_service_for_completeness(self):
+
+        # TODO Move this to a more global configuration and in a external stuff (ie db)
+        # Before 2022-04 the service id wasn't set maybe update all data with S1-legacy ?
         completeness_service_dict = {
-            "S1A": ["PRIP_S1A_Serco"],
-            "S1C": ["PRIP_S1C_Serco", "PRIP_S1C_Werum"],
-            "S2A": ["PRIP_S2A_ATOS"],
-            "S2B": ["PRIP_S2B_CAPGEMINI"],
-            "S2C": ["PRIP_S2C_ATOS_datatest"],
-            # "S3A": "PRIP_SERVICE_S3A", N/A
-            # "S3B": "PRIP_SERVICE_S3B", N/A
-            # "S5P": "PRIP_SERVICE_S5P", N/A
+            "S1A": {
+                "0": ["S1-legacy"],
+                "2022-04-06T00:00:00.000Z": ["PRIP_S1A_Serco"],
+            },
+            "S1B": {
+                "0": ["S1-legacy"],
+                "2022-04-01T00:00:00.000Z": ["PRIP_S1B_DLR"],
+            },
+            "S1C": {
+                "0": ["PRIP_S1C_Serco", "PRIP_S1C_Werum"],
+                "2025-02-17T11:00:00.000Z": ["PRIP_S1C_Werum"],
+            },
+            # Coming sooon
+            # "S1D": {
+            #     "0": ["PRIP_S1D_XXX"],
+            # },
+            "S2A": {
+                "0": ["S2-legacy"],
+                "2022-04-01T00:00:00.000Z": ["PRIP_S2A_ATOS"],
+                "2025-01-28T00:00:00.000Z": ["PRIP_S2C_ATOS_datatest"],
+            },
+            "S2B": {
+                "0": ["S2-legacy"],
+                "2022-04-01T00:00:00.000Z": ["PRIP_S2B_CAPGEMIN"],
+            },
+            "S2C": {
+                "0": ["PRIP_S2C_ATOS_datatest"],
+            },
+            # "S3A": {
+            #     "0": ["PRIP_S3_Legacy"],
+            #     "0": ["PRIP_S3A_ACRI"],
+            # },
+            # "S3B": {
+            #     "0": ["PRIP_S3_Legacy"],
+            #     "0": ["PRIP_S3B_SERCO"],
+            #     "0": ["PRIP_S3B_TPZ"],
+            # },
+            # "S5P": {"0": ["PRIP_SSP_DLR"]},
         }
 
-        return completeness_service_dict.get(self.satellite_unit, None)
+        config_completeness = completeness_service_dict.get(self.satellite_unit, None)
+
+        if config_completeness is None:
+            LOGGER.warning(
+                "[CompletenessConfig] - Unknow satellite : %s", self.satellite_unit
+            )
+            return None
+
+        # Maybe use
+        (nearest_time_indicator, allowed_prip_name) = (
+            get_good_threshold_config_from_value(
+                config_completeness, datetime_to_zulu(self.l0_sensing_time_start)
+            )
+        )
+
+        return allowed_prip_name
 
     def compute_local_value(self, product_type, related_documents=None):
         """Compute value for a specific product_type"""
@@ -477,7 +527,7 @@ class CdsDatatake(AnomalyMixin, generated.CdsDatatake):
             .filter("term", datatake_id=self.datatake_id)
             .filter("term", satellite_unit=self.satellite_unit)
             .filter("term", product_type=product_type)
-            .filter("terms", prip_service=self.get_service_for_completeness())
+            .filter("terms", prip_service=completeness_service)
             .filter("exists", field="prip_id")
             .params(ignore=404)
         )

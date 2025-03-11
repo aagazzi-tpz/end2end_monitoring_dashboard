@@ -354,3 +354,22 @@ It's not possible to restore a snapshot from a higher version cluster.
 However, it is possible to restore a snasphot from a lower version cluster (cool for upgrade).
 
 For small extract you can use Elastic dump https://github.com/elasticsearch-dump/elasticsearch-dump
+
+## Running Grafana with external database
+
+```bash
+docker compose -f ${WORK_DIR}/development/docker-compose.yaml \
+-f ${WORK_DIR}/development/docker-compose.db.pg.yaml \
+--env-file ${WORK_DIR}/development/.env up -d 
+```
+
+### Importing data from a dump
+
+Assuming dump is inside ``./backup`` folder
+```bash
+docker run --rm -v ./backup:/backup postgres:latest bash -c "gunzip -c /backup/my-db.dump.gz | pg_restore -h localhost -U grafana -d grafana"
+```
+
+```bash
+docker run --rm -v ./backup:/backup --network container:postgres-container postgres:latest bash -c "gunzip -c /backup/my-db.dump.gz" -c "psql -h localhost -U grafana -d grafana -f /backup/my-db.dump"
+```

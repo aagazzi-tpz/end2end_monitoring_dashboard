@@ -1,4 +1,4 @@
-""" Datatake S1 model definition """
+"""Datatake S1 model definition"""
 
 import logging
 from typing import Callable
@@ -294,7 +294,10 @@ class CdsDatatakeS1(CdsDatatake):
 
         # specific
         if product_type == "RF_RAW__0S":
-            sensing_value = 2800000
+            if self.satellite_unit == "S1C":
+                sensing_value = 2690000
+            else:
+                sensing_value = 2800000
 
         # apply tolerance if we have sensing value
         if sensing_value:

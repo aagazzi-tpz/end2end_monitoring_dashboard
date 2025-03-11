@@ -1,3 +1,0 @@
-"""
-Various common tools
-"""
