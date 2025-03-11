@@ -66,8 +66,12 @@ pip freeze | grep maas-
 
 ## Running test
 
-```
+```bash
 pip install pytest pytest-cov wheel
+```
+
+```bash
+TZ=UTC pytest -ryv
 ```
 
 ## Setup database mapping

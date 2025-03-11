@@ -1,24 +1,6 @@
 from unittest.mock import patch
 
 
-def test_product_type_over_specific_area(
-    s1_datatake_ew, s1_datatake_iw, s1_datatake_rfc, s1_datatake_sm, s1_datatake_wv
-):
-
-    assert s1_datatake_wv.product_type_over_specific_area("OCN__2S") is False
-    assert s1_datatake_rfc.product_type_over_specific_area("OCN__2S") is False
-
-    assert s1_datatake_ew.product_type_over_specific_area("OCN__2S") is True
-    assert s1_datatake_ew.product_type_over_specific_area("SLC__1S") is True
-    assert s1_datatake_ew.product_type_over_specific_area("RAW__0S") is False
-
-    assert s1_datatake_iw.product_type_over_specific_area("OCN__2S") is True
-    assert s1_datatake_iw.product_type_over_specific_area("SLC__1S") is False
-
-    assert s1_datatake_sm.product_type_over_specific_area("OCN__2S") is True
-    assert s1_datatake_sm.product_type_over_specific_area("SLC__1S") is False
-
-
 def test_product_type_s2(s2_datatake_nobs):
 
     assert s2_datatake_nobs.get_expected_product_level() == ["L0_", "L1B", "L1C", "L2A"]
@@ -64,3 +46,13 @@ def test_impact_other_calculation_s2(
     assert mock_search_expected_tiles.called
 
     assert s2_datatake_nobs.number_of_expected_tiles == 1
+
+
+def test_prip_service_name(s2_datatake_nobs):
+
+    assert s2_datatake_nobs.get_service_for_completeness() == ["PRIP_S2A_ATOS"]
+
+    s2_datatake_nobs.observation_time_start = "2025-02-17T00:00:00.000Z"
+    s2_datatake_nobs.full_clean()
+
+    assert s2_datatake_nobs.get_service_for_completeness() == ["PRIP_S2C_ATOS_datatest"]

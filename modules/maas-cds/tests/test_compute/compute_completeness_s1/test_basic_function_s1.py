@@ -132,3 +132,26 @@ def test_amalfi_compute_key(s1_product_amalfi):
     """amalfi repport should be excluded of completeness computation"""
     compute_key = s1_product_amalfi.get_compute_key()
     assert compute_key is None
+
+
+def test_product_type_over_specific_area(
+    s1_datatake_ew, s1_datatake_iw, s1_datatake_rfc, s1_datatake_sm, s1_datatake_wv
+):
+
+    assert s1_datatake_wv.product_type_over_specific_area("OCN__2S") is False
+    assert s1_datatake_rfc.product_type_over_specific_area("OCN__2S") is False
+
+    assert s1_datatake_ew.product_type_over_specific_area("OCN__2S") is True
+    assert s1_datatake_ew.product_type_over_specific_area("SLC__1S") is True
+    assert s1_datatake_ew.product_type_over_specific_area("RAW__0S") is False
+
+    assert s1_datatake_iw.product_type_over_specific_area("OCN__2S") is True
+    assert s1_datatake_iw.product_type_over_specific_area("SLC__1S") is False
+
+    assert s1_datatake_sm.product_type_over_specific_area("OCN__2S") is True
+    assert s1_datatake_sm.product_type_over_specific_area("SLC__1S") is False
+
+
+def test_service_completeness(s1_datatake_wv):
+
+    assert s1_datatake_wv.get_service_for_completeness() == ["PRIP_S1A_Serco"]

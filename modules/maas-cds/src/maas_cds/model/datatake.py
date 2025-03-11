@@ -2,7 +2,6 @@
 
 import logging
 from typing import List
-from functools import cached_property
 
 from maas_cds.lib.config import get_good_threshold_config_from_value
 from maas_model.date_utils import datetime_to_zulu
@@ -57,7 +56,7 @@ class CdsDatatake(AnomalyMixin, generated.CdsDatatake):
     def get_service_for_completeness(self):
 
         # TODO Move this to a more global configuration and in a external stuff (ie db)
-        # Before 2022-04 the service id wasn't set maybe update all data with S1-legacy ?
+        # Before 2022-04 the service id wasn't set maybe update all data with SX-legacy ?
         completeness_service_dict = {
             "S1A": {
                 "0": ["S1-legacy"],
@@ -110,7 +109,7 @@ class CdsDatatake(AnomalyMixin, generated.CdsDatatake):
         # Maybe use
         (nearest_time_indicator, allowed_prip_name) = (
             get_good_threshold_config_from_value(
-                config_completeness, datetime_to_zulu(self.l0_sensing_time_start)
+                config_completeness, datetime_to_zulu(self.observation_time_start)
             )
         )
 

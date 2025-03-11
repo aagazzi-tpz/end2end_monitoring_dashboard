@@ -160,7 +160,9 @@ datatake_wv_dict = {
 
 @pytest.fixture
 def s1_datatake_wv():
-    return CdsDatatakeS1(**datatake_wv_dict)
+    datatake = CdsDatatakeS1(**datatake_wv_dict)
+    datatake.full_clean()
+    return datatake
 
 
 datatake_sm_dict = {
